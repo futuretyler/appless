@@ -178,6 +178,19 @@ AppLess is one of many things you can build on OpenUI. To use the same
 generative-UI stack in your own product, start at **[openui.com](https://openui.com)**
 and the [OpenUI repository](https://github.com/thesysdev/openui).
 
+## Telemetry
+
+AppLess sends one anonymous `appless_app_launched` event to
+[PostHog](https://posthog.com) on startup, so we can see how many people build
+and run the experiment. It carries
+only an anonymous per-device id and your platform (iOS / Android / web). No
+prompts, screen content, API keys, or personal data are ever collected. Opt out
+any time:
+
+```bash
+EXPO_PUBLIC_POSTHOG_DISABLED=1   # or the standard DO_NOT_TRACK=1
+```
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
