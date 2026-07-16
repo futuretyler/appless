@@ -23,13 +23,7 @@
 ## Demo
 
 <p align="center">
-  <a href="./assets/appless-demo.mp4">
-    <img src="./assets/appless-demo.gif" alt="AppLess demo" width="480" />
-  </a>
-</p>
-
-<p align="center">
-  <a href="./assets/appless-demo.mp4">&#9654; Watch with audio (MP4, 9.8 MB)</a>
+  <img src="./assets/appless-demo.gif" alt="AppLess demo" width="480" />
 </p>
 
 There are no apps to install, no menus to learn, no home screen full of icons.
