@@ -1,10 +1,3 @@
-<!-- TODO: replace assets/banner.png with the final hero image -->
-<p align="center">
-  <a href="https://openui.com">
-    <img src="./assets/banner.png" alt="AppLess" width="100%" />
-  </a>
-</p>
-
 <h1 align="center">AppLess &middot; a phone with no apps. just ask.</h1>
 
 <p align="center">
@@ -14,6 +7,7 @@
 
 <p align="center">
   <a href="https://openui.com">openui.com</a> &nbsp;&middot;&nbsp;
+  <a href="#demo">Demo</a> &nbsp;&middot;&nbsp;
   <a href="#quick-start">Quick start</a> &nbsp;&middot;&nbsp;
   <a href="#how-it-works">How it works</a>
 </p>
@@ -25,6 +19,12 @@
 </p>
 
 ---
+
+## Demo
+
+<p align="center">
+  <img src="./assets/appless-demo.gif" alt="AppLess demo" width="480" />
+</p>
 
 There are no apps to install, no menus to learn, no home screen full of icons.
 You open AppLess and ask for what you want, and the screen for it is generated
@@ -48,10 +48,6 @@ turns into live, interactive native components.
 > reflect no real state, because nothing is wired up yet. It is a glimpse of what a
 > generative-UI OS could feel like, not a working replacement for your apps, at
 > least until someone [makes it real](#fork-it-and-make-it-yours).
-
-<!-- TODO: drop a short screen-capture GIF here, e.g. assets/demo.gif -->
-
-
 
 ## Quick start
 
