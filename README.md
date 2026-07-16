@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="https://openui.com">openui.com</a> &nbsp;&middot;&nbsp;
+  <a href="#demo">Demo</a> &nbsp;&middot;&nbsp;
   <a href="#quick-start">Quick start</a> &nbsp;&middot;&nbsp;
   <a href="#how-it-works">How it works</a>
 </p>
@@ -49,9 +50,13 @@ turns into live, interactive native components.
 > generative-UI OS could feel like, not a working replacement for your apps, at
 > least until someone [makes it real](#fork-it-and-make-it-yours).
 
-<!-- TODO: drop a short screen-capture GIF here, e.g. assets/demo.gif -->
+## Demo
 
-
+<p align="center">
+  <a href="./assets/appless-demo.mp4">
+    <strong>&#9654; Watch AppLess in action (MP4, 9.8 MB)</strong>
+  </a>
+</p>
 
 ## Quick start
 
