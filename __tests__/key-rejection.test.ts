@@ -54,6 +54,18 @@ describe("Cerebras auth failures", () => {
     expect(cerebrasKey.getStatus()).toBe("present");
   });
 
+  it("surfaces the provider's human message from JSON error bodies (429 quota)", async () => {
+    respond(
+      429,
+      '{"message":"Tokens per minute limit exceeded - too many tokens processed.","type":"too_many_tokens_error","param":"quota","code":"token_quota_exceeded"}',
+    );
+    const err = await runToError();
+    expect(err.message).toBe("Tokens per minute limit exceeded - too many tokens processed.");
+    expect(err.message).not.toContain("{");
+    // Quota errors are not auth failures - the key survives.
+    expect(cerebrasKey.get()).toBe("csk-valid-key");
+  });
+
   it("a stale 401 cannot wipe a key the user already replaced", async () => {
     // The in-flight stream saw the OLD key; by the time it errors, the user
     // has entered a new one - markRejected must no-op.

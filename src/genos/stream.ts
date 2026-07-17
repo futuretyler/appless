@@ -184,7 +184,15 @@ async function streamRound(
     }
     if (!res.ok || !res.body) {
       const detail = await res.text().catch(() => "");
-      throw new Error(detail.slice(0, 500) || `HTTP ${res.status}`);
+      // Provider errors arrive as JSON - surface the human message (e.g.
+      // "Tokens per minute limit exceeded"), not the raw blob.
+      let message = detail;
+      try {
+        message = JSON.parse(detail).message ?? detail;
+      } catch {
+        // not JSON - use the body as-is
+      }
+      throw new Error(message.slice(0, 300) || `HTTP ${res.status}`);
     }
 
     const reader = res.body.getReader();

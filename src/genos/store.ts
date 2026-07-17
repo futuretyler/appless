@@ -132,7 +132,13 @@ class ScreenStore {
 export const screenStore = new ScreenStore();
 
 // Controller: generation, navigation cache, speculative prefetch
-const MAX_PREFETCH = 6;
+/**
+ * Speculative generations per settled screen. Each prefetch resends the
+ * full system prompt (~6k tokens), so a burst of 6 blew a free-tier
+ * Cerebras TPM quota on the FIRST screen in live testing - 2 keeps the
+ * instant-navigation feel for the top actions without torching the budget.
+ */
+const MAX_PREFETCH = 2;
 /** How many ancestor screens to replay as conversation context. */
 const CONTEXT_DEPTH = 2;
 /** A cached screen still pending/streaming after this long is considered stuck. */
