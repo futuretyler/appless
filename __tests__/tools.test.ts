@@ -8,7 +8,7 @@ jest.mock("expo-secure-store", () => ({
 // expo/fetch pulls the winter runtime, which jest-expo's env can't load.
 jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
 
-import { loremflickrUrl, parseImgUrl } from "../src/genos/tools/images";
+import { isTrustedImageUrl, loremflickrUrl, parseImgUrl } from "../src/genos/tools/images";
 import { executeTool, formatWebResults } from "../src/genos/tools/search";
 
 describe("semantic image queries (/api/img)", () => {
@@ -44,6 +44,21 @@ describe("semantic image queries (/api/img)", () => {
     expect(loremflickrUrl({ q: "thai curry", seed: 3, w: 200, h: 200 })).toBe(
       "https://loremflickr.com/200/200/thai%2Ccurry?lock=3",
     );
+  });
+
+  it("only trusts direct URLs the image pipeline itself produces", () => {
+    expect(isTrustedImageUrl("https://images.unsplash.com/photo-1?w=800")).toBe(true);
+    expect(isTrustedImageUrl("https://loremflickr.com/800/500/ramen?lock=2")).toBe(true);
+    for (const src of [
+      "https://evil.example/pixel.gif", // tracking beacon
+      "http://images.unsplash.com/photo-1", // downgrade
+      "https://images.unsplash.com.evil.example/x", // host suffix trick
+      "file:///etc/passwd",
+      "data:image/png;base64,AAAA",
+      "genos://home",
+    ]) {
+      expect(isTrustedImageUrl(src)).toBe(false);
+    }
   });
 });
 

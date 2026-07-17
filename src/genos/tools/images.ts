@@ -79,9 +79,22 @@ function ensureUnsplash(q: string): Promise<void> {
 }
 
 /**
- * Resolve a generated src to a loadable URL. Non-semantic srcs pass through.
- * With an Unsplash key, returns undefined (placeholder) while the search is
- * in flight so the image doesn't double-load.
+ * Direct-URL hosts the image pipeline itself produces. The prompt requires
+ * /api/img references, so any other direct URL is model runaway (or injected
+ * web content) - loading it would beacon the user's IP to an arbitrary
+ * host. Those render the themed placeholder instead.
+ */
+const TRUSTED_IMAGE_HOSTS = /^https:\/\/(images\.unsplash\.com|loremflickr\.com)\//i;
+
+export function isTrustedImageUrl(src: string): boolean {
+  return TRUSTED_IMAGE_HOSTS.test(src);
+}
+
+/**
+ * Resolve a generated src to a loadable URL. Non-semantic srcs load only
+ * from trusted image hosts. With an Unsplash key, returns undefined
+ * (placeholder) while the search is in flight so the image doesn't
+ * double-load.
  */
 export function useSemanticImage(src?: string): string | undefined {
   const parsed = src ? parseImgUrl(src) : null;
@@ -107,7 +120,7 @@ export function useSemanticImage(src?: string): string | undefined {
   }, [q]);
 
   if (!src) return undefined;
-  if (!parsed) return src;
+  if (!parsed) return isTrustedImageUrl(src) ? src : undefined;
   if (!q) return loremflickrUrl(parsed);
   const candidates = unsplashCache.get(parsed.q);
   if (candidates === undefined) return undefined; // still searching
