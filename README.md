@@ -73,6 +73,13 @@ EXPO_PUBLIC_CEREBRAS_API_KEY=csk-...    # skip the first-launch key screen
 # EXPO_PUBLIC_CEREBRAS_BASE_URL=        # any OpenAI-compatible endpoint
 ```
 
+> **These env vars are for local development only.** Expo inlines every
+> `EXPO_PUBLIC_*` value into the JS bundle at build time - anyone with the
+> build can extract them. Never distribute a build with keys set this way:
+> the Cerebras key belongs in the first-launch prompt (on-device Keychain /
+> Keystore), and if you ship with Exa/Unsplash enabled, front those APIs
+> with a rate-limited proxy you control instead of embedding the keys.
+
 > Expo SDK 54 is pinned to match the Expo Go build on the App Store and Play
 > Store. If your Expo Go reports a different SDK, run
 > `npx expo install expo@^<version> && npx expo install --fix`.

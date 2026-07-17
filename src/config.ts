@@ -11,7 +11,12 @@ export const CEREBRAS_BASE_URL =
   process.env.EXPO_PUBLIC_CEREBRAS_BASE_URL ?? "https://api.cerebras.ai/v1";
 export const GENOS_MODEL = process.env.EXPO_PUBLIC_GENOS_MODEL ?? "gemma-4-31b";
 
-/** Optional tool keys - features degrade gracefully when absent. */
+/**
+ * Optional tool keys - features degrade gracefully when absent.
+ * EXPO_PUBLIC_* values are inlined into the JS bundle at build time, so
+ * these are dev/demo-only: a distributed build with them set ships the
+ * keys to everyone. For distribution, front Exa/Unsplash with a proxy.
+ */
 export const UNSPLASH_ACCESS_KEY = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY;
 export const EXA_API_KEY = process.env.EXPO_PUBLIC_EXA_API_KEY;
 
