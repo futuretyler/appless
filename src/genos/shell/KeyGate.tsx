@@ -15,6 +15,8 @@ export function KeyGate({ status }: { status: KeyStatus }) {
   const t = useCds();
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
+  /** Concealed by default - keys are usually pasted; reveal is for checking. */
+  const [reveal, setReveal] = useState(false);
   const valid = value.trim().length >= 10;
 
   const save = async () => {
@@ -53,27 +55,49 @@ export function KeyGate({ status }: { status: KeyStatus }) {
         </Text>
       )}
 
-      <TextInput
-        value={value}
-        onChangeText={setValue}
-        placeholder="csk-…"
-        placeholderTextColor={t.ink3}
-        autoCapitalize="none"
-        autoCorrect={false}
-        onSubmitEditing={save}
+      <View
         style={{
           width: "100%",
           maxWidth: 360,
+          flexDirection: "row",
+          alignItems: "center",
           borderWidth: 1,
           borderColor: t.sep,
           backgroundColor: t.group,
           borderRadius: 12,
-          paddingVertical: 12,
-          paddingHorizontal: 14,
-          fontSize: 14,
-          color: t.ink,
         }}
-      />
+      >
+        <TextInput
+          value={value}
+          onChangeText={setValue}
+          placeholder="csk-…"
+          placeholderTextColor={t.ink3}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry={!reveal}
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
+          onSubmitEditing={save}
+          style={{
+            flex: 1,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            fontSize: 14,
+            color: t.ink,
+          }}
+        />
+        <Pressable
+          onPress={() => setReveal((r) => !r)}
+          accessibilityRole="button"
+          accessibilityLabel={reveal ? "Hide key" : "Show key"}
+          style={{ paddingHorizontal: 14, paddingVertical: 12 }}
+        >
+          <Text style={{ fontSize: 13, color: t.tint, fontWeight: "600" }}>
+            {reveal ? "Hide" : "Show"}
+          </Text>
+        </Pressable>
+      </View>
 
       <Pressable
         onPress={save}
