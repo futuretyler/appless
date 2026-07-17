@@ -246,8 +246,18 @@ function startStream(id: string) {
       // A command screen must never be served from cache: the shell executes
       // its navigation exactly once per screen id, so a cached hit would push
       // a dead blank frame and silently drop the command. Forget it so the
-      // same request re-generates (and re-executes) next time.
-      if (osCommand) forgetScreen(id);
+      // same request re-generates (and re-executes) next time - but remember
+      // the action key, or prefetch would relaunch it on every revisit.
+      if (osCommand) {
+        for (const [key, v] of actionIndex) if (v === id) osCommandKeys.add(key);
+        forgetScreen(id);
+        if (s?.speculative) {
+          // Nothing ever executes a speculative command screen - evict the
+          // orphan instead of letting one accumulate per revisit.
+          screenStore.remove([id]);
+          return;
+        }
+      }
       screenStore.patch(id, {
         status: "done",
         genMs,
@@ -265,11 +275,35 @@ function startStream(id: string) {
   });
 }
 
+/** Delete every entry in `map` whose value is one of `ids`. */
+function deleteWhereValueIn(map: Map<string, string>, ids: ReadonlySet<string>) {
+  for (const [key, v] of map) if (ids.has(v)) map.delete(key);
+}
+
+/**
+ * Action keys that resolved to @OS commands. forgetScreen drops their cache
+ * entries (a command must re-execute per request), but prefetch must not
+ * treat the now-empty slot as "never tried" and relaunch a paid generation
+ * on every revisit - commands only mean anything on a real tap.
+ */
+const osCommandKeys = new Set<string>();
+
 /** Drop every cache-index entry pointing at a screen. */
 function forgetScreen(id: string) {
-  for (const [key, v] of actionIndex) if (v === id) actionIndex.delete(key);
-  for (const [key, v] of deepLinkIndex) if (v === id) deepLinkIndex.delete(key);
-  for (const [key, v] of appHomeIndex) if (v === id) appHomeIndex.delete(key);
+  const ids = new Set([id]);
+  deleteWhereValueIn(actionIndex, ids);
+  deleteWhereValueIn(deepLinkIndex, ids);
+  deleteWhereValueIn(appHomeIndex, ids);
+}
+
+/** Test-only visibility into the cache indexes for eviction assertions. */
+export function cacheIndexSizes() {
+  return {
+    actions: actionIndex.size,
+    deepLinks: deepLinkIndex.size,
+    appHomes: appHomeIndex.size,
+    osCommands: osCommandKeys.size,
+  };
 }
 
 interface LaunchInput {
@@ -418,13 +452,13 @@ export function closeApp(appId: string) {
       inflight.delete(id);
     }
   }
-  for (const [key, id] of actionIndex) {
-    if (removed.has(id)) actionIndex.delete(key);
-  }
-  for (const [key, id] of deepLinkIndex) {
-    if (removed.has(id)) deepLinkIndex.delete(key);
-  }
+  deleteWhereValueIn(actionIndex, removed);
+  deleteWhereValueIn(deepLinkIndex, removed);
   appHomeIndex.delete(appId);
+  // osCommandKeys are keyed `${parentId} ${message}` - sweep evicted parents.
+  for (const key of osCommandKeys) {
+    if (removed.has(key.slice(0, key.indexOf(" ")))) osCommandKeys.delete(key);
+  }
   if (activeScreenId && removed.has(activeScreenId)) activeScreenId = null;
   screenStore.remove(removed);
 }
@@ -484,7 +518,7 @@ function maybePrefetch(id: string) {
 
   for (const message of extractActions(cleanLang(screen.content)).slice(0, MAX_PREFETCH)) {
     const key = actionKey(id, message);
-    if (actionIndex.has(key)) continue;
+    if (actionIndex.has(key) || osCommandKeys.has(key)) continue;
     const childId = launchScreen({
       appId: screen.appId,
       appName: screen.appName,

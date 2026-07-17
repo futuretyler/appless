@@ -7,7 +7,11 @@
 export interface Watchdog {
   /** Pass to fetch - aborts on caller abort OR timeout. */
   signal: AbortSignal;
-  /** Call on every received chunk to reset the idle window. */
+  /**
+   * Call when the response starts and on every received chunk. The idle
+   * window ARMS on the first call - before that, only the absolute cap
+   * applies, so a queued request with slow TTFB isn't killed as "idle".
+   */
   touch(): void;
   /** True when the abort came from a timeout, not the caller. */
   readonly timedOut: boolean;
@@ -31,14 +35,15 @@ export function createWatchdog(opts: {
   opts.signal?.addEventListener("abort", onCallerAbort);
 
   const totalTimer = setTimeout(trip, opts.totalMs);
-  let idleTimer: ReturnType<typeof setTimeout> | null = opts.idleMs
-    ? setTimeout(trip, opts.idleMs)
-    : null;
+  // Armed lazily by the first touch() - pre-first-byte waiting is bounded
+  // by totalMs alone.
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
+  let disposed = false;
   return {
     signal: controller.signal,
     touch() {
-      if (!opts.idleMs) return;
+      if (disposed || !opts.idleMs) return;
       if (idleTimer) clearTimeout(idleTimer);
       idleTimer = setTimeout(trip, opts.idleMs);
     },
@@ -46,6 +51,7 @@ export function createWatchdog(opts: {
       return timedOut;
     },
     dispose() {
+      disposed = true;
       clearTimeout(totalTimer);
       if (idleTimer) clearTimeout(idleTimer);
       opts.signal?.removeEventListener("abort", onCallerAbort);

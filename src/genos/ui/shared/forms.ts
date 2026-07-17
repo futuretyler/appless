@@ -12,12 +12,20 @@ import {
 import { PASSWORD_COMPONENT_TYPE } from "../../formValues";
 
 /**
+ * One predicate for both halves of the password guarantee: masked on
+ * screen (secureTextEntry) AND stripped from the prompt (componentType
+ * marker). Splitting the check invites the exact bug appless-qx7 fixed -
+ * a field masked for the user but forwarded to the model.
+ */
+const isPasswordType = (type?: string) => type === "password";
+
+/**
  * componentType for an Input's form-state entries. Password inputs get a
  * distinct marker so extractFormValues can strip their values before any
  * request leaves the device.
  */
 export function inputComponentType(type?: string): string {
-  return type === "password" ? PASSWORD_COMPONENT_TYPE : "Input";
+  return isPasswordType(type) ? PASSWORD_COMPONENT_TYPE : "Input";
 }
 
 /**
@@ -54,7 +62,7 @@ const KEYBOARD: Record<string, "default" | "email-address" | "numeric" | "url"> 
 /** TextInput behavior derived from the contract's input `type`. */
 export function textInputBehaviorProps(type?: string) {
   return {
-    secureTextEntry: type === "password",
+    secureTextEntry: isPasswordType(type),
     keyboardType: KEYBOARD[type ?? "text"] ?? "default",
     autoCapitalize: (type === "email" || type === "url" ? "none" : "sentences") as
       | "none"

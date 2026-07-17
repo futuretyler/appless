@@ -30,13 +30,17 @@ export function parseGenosUrl(url: string): { cmd: string; params: Record<string
 /**
  * Only plain web links may leave the app. Model output is untrusted, so
  * tel:/sms:/intent:/file:/custom schemes dispatched from a generated tap
- * are dialer/phishing primitives, not features.
+ * are dialer/phishing primitives, not features. Userinfo URLs are rejected
+ * outright: "https://google.com@evil.io" navigates to evil.io while reading
+ * as google.com in a confirmation dialog - legitimate generated links never
+ * carry credentials.
  */
 export function isSafeExternalUrl(url: string): boolean {
-  return /^https?:\/\/\S+$/i.test(url.trim()) && !/[\n\r]/.test(url);
+  const t = url.trim();
+  return /^https?:\/\/\S+$/i.test(t) && !/[\n\r]/.test(url) && !/^https?:\/\/[^/?#]*@/i.test(t);
 }
 
-/** Display host for the leave-the-app confirmation. */
+/** Display host for the leave-the-app confirmation (userinfo stripped). */
 export function externalHost(url: string): string {
-  return url.trim().match(/^https?:\/\/([^/?#]+)/i)?.[1] ?? url.trim();
+  return url.trim().match(/^https?:\/\/(?:[^/?#]*@)?([^/?#]+)/i)?.[1] ?? url.trim();
 }

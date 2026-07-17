@@ -211,9 +211,15 @@ export default function GenOS() {
    * lifetime of a screen mount - a changing identity resets the live store.
    */
   const formStates = useRef(new Map<string, Record<string, unknown>>());
+  // Keyed on the generation epoch too: retryScreen keeps the id but resets
+  // startedAt, and the retry remount must seed the LATEST saved snapshot,
+  // not the one captured when the screen was first entered. startedAt only
+  // changes across the content-empty (Skeleton) boundary, so identity never
+  // shifts under a live Renderer.
   const initialFormState = React.useMemo(
     () => (topId ? formStates.current.get(topId) : undefined),
-    [topId],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [topId, top?.startedAt],
   );
 
   useEffect(() => {

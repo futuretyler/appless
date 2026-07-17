@@ -7,6 +7,10 @@
  */
 import { useEffect, useReducer } from "react";
 import { UNSPLASH_ACCESS_KEY } from "../../config";
+import { createWatchdog } from "../watchdog";
+
+/** A search that hasn't answered in this long won't - fall back to LoremFlickr. */
+const UNSPLASH_TIMEOUT_MS = 15_000;
 
 export interface ImgQuery {
   q: string;
@@ -56,10 +60,14 @@ function ensureUnsplash(q: string): Promise<void> {
   const pending = unsplashPending.get(q);
   if (pending) return pending;
   const p = (async () => {
+    // Timeout matters doubly here: the promise is memoized per query, so a
+    // fetch that never settles would leave every future asker of this query
+    // awaiting it forever (permanent placeholder).
+    const watchdog = createWatchdog({ totalMs: UNSPLASH_TIMEOUT_MS });
     try {
       const res = await fetch(
         `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=10`,
-        { headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` } },
+        { headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` }, signal: watchdog.signal },
       );
       const json = res.ok
         ? ((await res.json()) as { results?: Array<{ urls?: { raw?: string } }> })
@@ -71,6 +79,7 @@ function ensureUnsplash(q: string): Promise<void> {
     } catch {
       unsplashCache.set(q, []);
     } finally {
+      watchdog.dispose();
       unsplashPending.delete(q);
     }
   })();

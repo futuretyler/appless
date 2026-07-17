@@ -55,6 +55,15 @@ describe("isSafeExternalUrl", () => {
     expect(isSafeExternalUrl("https://good.com\nevil")).toBe(false);
     expect(isSafeExternalUrl("https:// example.com")).toBe(false);
     expect(isSafeExternalUrl("")).toBe(false);
+    // These pass the trimmed-regex clause and are caught ONLY by the
+    // raw-newline guard - they pin that clause independently.
+    expect(isSafeExternalUrl("https://good.com\n")).toBe(false);
+    expect(isSafeExternalUrl("\nhttps://good.com")).toBe(false);
+  });
+
+  it("blocks userinfo URLs that spoof the confirmation host", () => {
+    expect(isSafeExternalUrl("https://google.com@evil.io/x")).toBe(false);
+    expect(isSafeExternalUrl("https://paypal.com:hunter2@evil.io")).toBe(false);
   });
 });
 
@@ -62,5 +71,10 @@ describe("externalHost", () => {
   it("extracts the host for the confirmation dialog", () => {
     expect(externalHost("https://www.example.com/path?q=1")).toBe("www.example.com");
     expect(externalHost("http://sub.domain.io")).toBe("sub.domain.io");
+  });
+
+  it("strips userinfo so the dialog can never show a spoofed prefix", () => {
+    expect(externalHost("https://google.com@evil.io/x")).toBe("evil.io");
+    expect(externalHost("https://user:pass@evil.io")).toBe("evil.io");
   });
 });

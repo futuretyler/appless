@@ -13,12 +13,9 @@ jest.mock("expo-secure-store", () => ({
 jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
 jest.mock("react-native-webview", () => ({ WebView: () => null }));
 
-interface StreamHandlers {
-  onDelta: (text: string) => void;
-  onDone: (info: { truncated: boolean; dropped: boolean }) => void;
-  onError: (err: Error) => void;
-  signal?: AbortSignal;
-}
+// The real handler contract - a locally redeclared mock shape would drift.
+import type { StreamHandlers } from "../src/genos/stream";
+
 const launches: Array<{ handlers: StreamHandlers }> = [];
 jest.mock("../src/genos/stream", () => ({
   NEEDS_LIVE_DATA: "needs live data",

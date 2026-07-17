@@ -12,13 +12,8 @@ jest.mock("expo-secure-store", () => ({
 }));
 jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
 
-interface StreamHandlers {
-  onDelta: (text: string) => void;
-  onDone: (info: { truncated: boolean; dropped: boolean }) => void;
-  onError: (err: Error) => void;
-  onToolRound?: (calls: unknown[]) => "continue" | "abort";
-  signal?: AbortSignal;
-}
+// The real handler contract - a locally redeclared mock shape would drift.
+import type { StreamHandlers } from "../src/genos/stream";
 
 const launches: Array<{ messages: unknown; handlers: StreamHandlers }> = [];
 jest.mock("../src/genos/stream", () => ({
@@ -29,6 +24,7 @@ jest.mock("../src/genos/stream", () => ({
 }));
 
 import {
+  cacheIndexSizes,
   closeApp,
   openApp,
   openDeepLink,
@@ -99,12 +95,42 @@ describe("closeApp", () => {
     const child = resolveAction(id, "Go to A");
     expect(screenStore.get(child)).toBeDefined();
 
+    // The index maps must shrink too - screen eviction alone would look
+    // identical from the outside (resolveAction self-heals on dangling
+    // entries), which is exactly how an eviction revert would hide.
+    const before = cacheIndexSizes();
     closeApp("notes");
+    const after = cacheIndexSizes();
+    expect(after.actions).toBe(before.actions - 2); // both prefetched actions
+    expect(after.appHomes).toBe(before.appHomes - 1);
+
     expect(screenStore.get(child)).toBeUndefined();
 
     const reopened = openApp(makeApp("notes"));
     expect(reopened).not.toBe(id);
     expect(screenStore.get(reopened)?.status).toBe("pending");
+  });
+
+  it("never re-prefetches an action that resolved to an @OS command", () => {
+    const before = launches.length;
+    const { id: parent } = openAndSettle("radio");
+    const children = launches.slice(before + 1);
+    expect(children).toHaveLength(2);
+
+    // The first speculative child settles as a bare command.
+    children[0].handlers.onDelta("@OS(home)");
+    children[0].handlers.onDone({ truncated: false, dropped: false });
+
+    // The orphan is evicted - nothing will ever execute a speculative
+    // command screen.
+    expect(screenStore.all().filter((s) => s.parentId === parent)).toHaveLength(1);
+
+    // Revisiting the parent must not relaunch the @OS action (the paid
+    // regenerate-per-visit loop).
+    const relaunchesBefore = launches.length;
+    setActiveScreen(null);
+    setActiveScreen(parent);
+    expect(launches.length).toBe(relaunchesBefore);
   });
 
   it("ignores late callbacks from aborted streams", () => {

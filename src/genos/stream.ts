@@ -49,7 +49,7 @@ const MAX_TOOL_CALLS_PER_ROUND = 3;
 /** Longer than this is model runaway, not a search query. */
 const MAX_QUERY_CHARS = 200;
 
-interface StreamHandlers {
+export interface StreamHandlers {
   onDelta: (text: string) => void;
   onDone: (info: StreamEndInfo) => void;
   onError: (err: Error) => void;
@@ -188,6 +188,8 @@ async function streamRound(
     }
 
     const reader = res.body.getReader();
+    // The response has started - arm the idle window from here on.
+    watchdog.touch();
     const decode = createUtf8Decoder();
     let buffer = "";
     let sawDone = false;
@@ -329,12 +331,14 @@ export async function streamScreen(messages: ChatMessage[], handlers: StreamHand
           if (seenQueries.has(key)) {
             return Promise.resolve("ERROR: duplicate query - see the other result");
           }
-          seenQueries.add(key);
           if (executed >= MAX_TOOL_CALLS_PER_ROUND) {
             return Promise.resolve(
               `ERROR: too many tool calls - only ${MAX_TOOL_CALLS_PER_ROUND} run per round`,
             );
           }
+          // Only executed queries count as seen - a duplicate of a
+          // cap-skipped call must not claim "see the other result".
+          seenQueries.add(key);
           executed++;
           return executeTool(c.name, c.args, signal);
         }),
