@@ -203,6 +203,19 @@ export default function GenOS() {
   const top = topId ? screenStore.get(topId) : undefined;
   const generating = top?.status === "pending" || top?.status === "streaming";
 
+  /**
+   * Per-screen form state. react-lang's store lives inside each Renderer
+   * mount, so without this every back/forward navigation destroys what the
+   * user typed. Values persist on field blur (react-lang only reports
+   * committed values); initialState must stay referentially stable for the
+   * lifetime of a screen mount - a changing identity resets the live store.
+   */
+  const formStates = useRef(new Map<string, Record<string, unknown>>());
+  const initialFormState = React.useMemo(
+    () => (topId ? formStates.current.get(topId) : undefined),
+    [topId],
+  );
+
   useEffect(() => {
     setActiveScreen(topId);
   }, [topId, top?.status]);
@@ -344,6 +357,10 @@ export default function GenOS() {
       // Abort the app's in-flight generations and evict its store state -
       // the shell state below only removes the visible session.
       closeApp(appId);
+      // Sweep saved form state for screens that no longer exist.
+      for (const id of formStates.current.keys()) {
+        if (!screenStore.get(id)) formStates.current.delete(id);
+      }
       setSessions((s) => {
         const next = { ...s };
         delete next[appId];
@@ -644,6 +661,10 @@ export default function GenOS() {
                     library={genosLibrary}
                     isStreaming={generating}
                     onAction={handleAction}
+                    initialState={initialFormState}
+                    onStateUpdate={(state) => {
+                      if (topId) formStates.current.set(topId, state);
+                    }}
                   />
                 ) : (
                   <Skeleton />
