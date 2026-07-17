@@ -243,6 +243,11 @@ function startStream(id: string) {
       }
       const genMs = s ? Math.round(performance.now() - s.startedAt) : undefined;
       const osCommand = s ? parseOsCommand(s.content) : undefined;
+      // A command screen must never be served from cache: the shell executes
+      // its navigation exactly once per screen id, so a cached hit would push
+      // a dead blank frame and silently drop the command. Forget it so the
+      // same request re-generates (and re-executes) next time.
+      if (osCommand) forgetScreen(id);
       screenStore.patch(id, {
         status: "done",
         genMs,
@@ -258,6 +263,13 @@ function startStream(id: string) {
       screenStore.patch(id, { status: "error", error: err.message, searching: false });
     },
   });
+}
+
+/** Drop every cache-index entry pointing at a screen. */
+function forgetScreen(id: string) {
+  for (const [key, v] of actionIndex) if (v === id) actionIndex.delete(key);
+  for (const [key, v] of deepLinkIndex) if (v === id) deepLinkIndex.delete(key);
+  for (const [key, v] of appHomeIndex) if (v === id) appHomeIndex.delete(key);
 }
 
 interface LaunchInput {

@@ -31,6 +31,7 @@ jest.mock("../src/genos/stream", () => ({
 import {
   closeApp,
   openApp,
+  openDeepLink,
   resolveAction,
   screenStore,
   setActiveScreen,
@@ -145,6 +146,34 @@ describe("closeApp", () => {
     expect(launches.length).toBe(launchesBefore + 1);
     expect(screenStore.get(siblingId)?.status).toBe("pending");
     expect(screenStore.get(siblingId)?.speculative).toBe(false);
+  });
+
+  it("never serves @OS command screens from the action cache", () => {
+    const { id: parent } = openAndSettle("mailbox");
+
+    // The model answers a navigation-shaped request with a bare command.
+    const cmd = resolveAction(parent, "take me home please");
+    const launch = launches[launches.length - 1];
+    launch.handlers.onDelta("@OS(home)");
+    launch.handlers.onDone({ truncated: false, dropped: false });
+    expect(screenStore.get(cmd)?.osCommand).toEqual({ cmd: "home", arg: undefined });
+
+    // The shell executes commands once per screen id - a cached hit would be
+    // a dead blank frame. The same request must generate (and execute) fresh.
+    const again = resolveAction(parent, "take me home please");
+    expect(again).not.toBe(cmd);
+    expect(screenStore.get(again)?.status).toBe("pending");
+  });
+
+  it("never serves @OS command screens from the deep-link cache", () => {
+    const first = openDeepLink("timer", "start a 5 minute timer");
+    const launch = launches[launches.length - 1];
+    launch.handlers.onDelta('@OS(open, "clock")');
+    launch.handlers.onDone({ truncated: false, dropped: false });
+
+    const again = openDeepLink("timer", "start a 5 minute timer");
+    expect(again).not.toBe(first);
+    expect(screenStore.get(again)?.status).toBe("pending");
   });
 
   it("leaves other apps' sessions untouched", () => {
