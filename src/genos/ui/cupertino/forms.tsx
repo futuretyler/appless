@@ -252,6 +252,7 @@ export const Button: Renderer<ButtonProps> = ({ props }) => {
   const compact = props.size === "extra-small" || props.size === "small";
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={() =>
         triggerAction(props.label ?? "", formName, props.action as ActionPlan | undefined)
       }

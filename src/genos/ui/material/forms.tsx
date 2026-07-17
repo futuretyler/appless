@@ -293,6 +293,7 @@ export const Button: Renderer<ButtonProps> = ({ props }) => {
   return (
     <View style={{ borderRadius: 20, overflow: "hidden" }}>
       <Pressable
+        accessibilityRole="button"
         onPress={() =>
           triggerAction(props.label ?? "", formName, props.action as ActionPlan | undefined)
         }

@@ -184,6 +184,7 @@ export const ListItem: Renderer<ListItemProps> = ({ props }) => {
     <Pressable
       onPress={onTap}
       disabled={!onTap}
+      accessibilityRole={onTap ? "button" : undefined}
       style={({ pressed }) => [styles.row, pressed && onTap ? { backgroundColor: t.fill } : null]}
     >
       {typeof leading === "string" && leading ? (
@@ -191,6 +192,7 @@ export const ListItem: Renderer<ListItemProps> = ({ props }) => {
       ) : leading && typeof leading === "object" && leading.src ? (
         <Img
           uri={leading.src}
+          alt={leading.alt}
           style={{ width: 42, height: 42, borderRadius: 9, backgroundColor: t.fill }}
         />
       ) : null}
@@ -471,7 +473,8 @@ export const ImageBlock: Renderer<ImageBlockProps> = ({ props }) => {
         backgroundColor: t.fill,
       }}
     >
-      <Img uri={props.src} style={{ width: "100%", height: "100%" }} />
+      {/* The ImageBlock schema has no alt - the caption is the honest stand-in. */}
+      <Img uri={props.src} alt={props.caption ?? undefined} style={{ width: "100%", height: "100%" }} />
       {!!props.caption && (
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.62)"]}
@@ -519,7 +522,12 @@ export const PhotoGrid: Renderer<PhotoGridProps> = ({ props }) => {
       }}
     >
       {images.map((im, i) => (
-        <Img key={i} uri={im.src} style={{ flexGrow: 1, flexBasis: "31%", aspectRatio: 1 }} />
+        <Img
+          key={i}
+          uri={im.src}
+          alt={im.alt}
+          style={{ flexGrow: 1, flexBasis: "31%", aspectRatio: 1 }}
+        />
       ))}
     </View>
   );
@@ -585,6 +593,8 @@ export const Chips: Renderer<ChipsProps> = ({ props }) => {
       {labels.map((l, i) => (
         <Pressable
           key={i}
+          accessibilityRole="button"
+          accessibilityState={{ selected: i === active }}
           onPress={() => {
             if (i === active) return;
             setActive(i);
@@ -641,6 +651,8 @@ export const Tabs: Renderer<TabsProps> = ({ props, renderNode }) => {
         {items.map((it, i) => (
           <Pressable
             key={i}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: i === active }}
             onPress={() => setActive(i)}
             style={{
               flex: 1,

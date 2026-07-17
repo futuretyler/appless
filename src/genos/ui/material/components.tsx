@@ -167,6 +167,7 @@ export const ListItem: Renderer<ListItemProps> = ({ props }) => {
     <Pressable
       onPress={onTap}
       disabled={!onTap}
+      accessibilityRole={onTap ? "button" : undefined}
       android_ripple={onTap ? { color: t.ripple } : undefined}
       style={({ pressed }) => ({
         flexDirection: "row",
@@ -183,6 +184,7 @@ export const ListItem: Renderer<ListItemProps> = ({ props }) => {
       ) : leading && typeof leading === "object" && leading.src ? (
         <Img
           uri={leading.src}
+          alt={leading.alt}
           style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.surfaceContainerHigh }}
         />
       ) : null}
@@ -455,7 +457,8 @@ export const ImageBlock: Renderer<ImageBlockProps> = ({ props }) => {
         backgroundColor: t.surfaceContainerHigh,
       }}
     >
-      <Img uri={props.src} style={{ width: "100%", height: "100%" }} />
+      {/* The ImageBlock schema has no alt - the caption is the honest stand-in. */}
+      <Img uri={props.src} alt={props.caption ?? undefined} style={{ width: "100%", height: "100%" }} />
       {!!props.caption && (
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.62)"]}
@@ -491,7 +494,12 @@ export const PhotoGrid: Renderer<PhotoGridProps> = ({ props }) => {
       }}
     >
       {images.map((im, i) => (
-        <Img key={i} uri={im.src} style={{ flexGrow: 1, flexBasis: "31%", aspectRatio: 1 }} />
+        <Img
+          key={i}
+          uri={im.src}
+          alt={im.alt}
+          style={{ flexGrow: 1, flexBasis: "31%", aspectRatio: 1 }}
+        />
       ))}
     </View>
   );
@@ -565,6 +573,8 @@ export const Chips: Renderer<ChipsProps> = ({ props }) => {
         return (
           <Pressable
             key={i}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
             onPress={() => {
               if (selected) return;
               setActive(i);
@@ -627,6 +637,8 @@ export const Tabs: Renderer<TabsProps> = ({ props, renderNode }) => {
         {items.map((it, i) => (
           <Pressable
             key={i}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: i === active }}
             onPress={() => setActive(i)}
             android_ripple={{ color: t.ripple }}
             style={{ flex: 1, alignItems: "center", paddingTop: 10, paddingHorizontal: 4 }}

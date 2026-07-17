@@ -37,6 +37,30 @@ function renderProgram(program: string): ReactTestRenderer {
   return tree;
 }
 
+it("mirrors the a11y semantics: chip roles/state and switch state", () => {
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(<Renderer response={PROGRAM} library={lib} isStreaming={false} />);
+  });
+  // Host elements only - findAll otherwise also matches composite wrappers.
+  const chips = tree.root.findAll(
+    (n) =>
+      typeof n.type === "string" &&
+      n.props?.accessibilityRole === "button" &&
+      n.props.accessibilityState?.selected !== undefined,
+  );
+  expect(chips.length).toBeGreaterThanOrEqual(3);
+  expect(chips.filter((n) => n.props.accessibilityState.selected === true).length).toBe(1);
+  const switches = tree.root.findAll(
+    (n) => typeof n.type === "string" && n.props?.accessibilityRole === "switch",
+  );
+  expect(switches.length).toBeGreaterThanOrEqual(1);
+  // The row-level switch announces its checked state (the native <Switch>
+  // inside it reports via `value` instead).
+  expect(switches.some((n) => typeof n.props.accessibilityState?.checked === "boolean")).toBe(true);
+  act(() => tree.unmount());
+});
+
 it("renders a mixed screen with the Material renderers", () => {
   const tree = renderProgram(PROGRAM);
   const text = JSON.stringify(tree.toJSON());
