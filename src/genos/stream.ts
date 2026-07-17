@@ -165,9 +165,18 @@ async function streamRound(
       }),
       signal: watchdog.signal,
     });
-    if (res.status === 401 || res.status === 403) {
+    if (res.status === 401) {
       cerebrasKey.markRejected(apiKey);
       throw new Error("Cerebras rejected the API key - enter a valid key");
+    }
+    if (res.status === 403) {
+      // NOT an invalid-key signal - WAF/entitlement/region blocks also use
+      // 403. Keep the stored key and surface the provider's actual reason;
+      // wiping it here trapped users in a pointless re-enter loop.
+      const detail = await res.text().catch(() => "");
+      throw new Error(
+        `Cerebras denied the request (403)${detail ? `: ${detail.slice(0, 300)}` : " - check account access"}`,
+      );
     }
     if (!res.ok || !res.body) {
       const detail = await res.text().catch(() => "");
