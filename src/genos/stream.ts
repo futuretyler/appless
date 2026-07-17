@@ -44,6 +44,10 @@ export const NEEDS_LIVE_DATA = "needs live data";
 
 /** Rounds that may end in tool calls before we force a plain generation. */
 const MAX_TOOL_ROUNDS = 3;
+/** Executed calls per round - the prompt asks for 1-3 focused queries. */
+const MAX_TOOL_CALLS_PER_ROUND = 3;
+/** Longer than this is model runaway, not a search query. */
+const MAX_QUERY_CHARS = 200;
 
 interface StreamHandlers {
   onDelta: (text: string) => void;
@@ -308,7 +312,33 @@ export async function streamScreen(messages: ChatMessage[], handlers: StreamHand
         content: result.content || null,
         tool_calls: result.toolCalls,
       });
-      const outputs = await Promise.all(calls.map((c) => executeTool(c.name, c.args, signal)));
+      // The model decides how many calls a round contains - the prompt asks
+      // for 1-3, but nothing else enforces it. Cap executions and skip
+      // duplicates/runaway queries; every call still gets a tool message
+      // (the protocol requires one per tool_call_id), skipped ones an
+      // honest ERROR the model can react to.
+      const seenQueries = new Set<string>();
+      let executed = 0;
+      const outputs = await Promise.all(
+        calls.map((c) => {
+          const query = String(c.args.query ?? "").trim();
+          if (query.length > MAX_QUERY_CHARS) {
+            return Promise.resolve("ERROR: query too long - use a concise search query");
+          }
+          const key = `${c.name} ${query.toLowerCase()}`;
+          if (seenQueries.has(key)) {
+            return Promise.resolve("ERROR: duplicate query - see the other result");
+          }
+          seenQueries.add(key);
+          if (executed >= MAX_TOOL_CALLS_PER_ROUND) {
+            return Promise.resolve(
+              `ERROR: too many tool calls - only ${MAX_TOOL_CALLS_PER_ROUND} run per round`,
+            );
+          }
+          executed++;
+          return executeTool(c.name, c.args, signal);
+        }),
+      );
       if (signal?.aborted) return;
       result.toolCalls.forEach((tc, i) => {
         convo.push({ role: "tool", tool_call_id: tc.id, content: outputs[i] });
