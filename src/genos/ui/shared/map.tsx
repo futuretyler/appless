@@ -11,15 +11,35 @@
  * referer. Design systems supply only their corner radius.
  */
 import React from "react";
-import { Platform, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import type { MapViewProps, Renderer } from "../contract";
+import { useIsPreview } from "./preview";
 
 export function createMapRenderer(borderRadius: number): Renderer<MapViewProps> {
   return function MapView({ props }) {
     const place = props.placeName ?? "";
     const zoom = typeof props.zoom === "number" ? props.zoom : 15;
     const src = `https://maps.google.com/maps?q=${encodeURIComponent(place)}&z=${zoom}&output=embed`;
+
+    // Switcher miniatures: a real embed per card is a WebView each - render
+    // a flat placeholder instead.
+    if (useIsPreview()) {
+      return (
+        <View
+          style={{
+            width: "100%",
+            height: 215,
+            borderRadius,
+            backgroundColor: "rgba(120,120,128,0.14)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ fontSize: 40, opacity: 0.55 }}>🗺️</Text>
+        </View>
+      );
+    }
 
     const frame =
       Platform.OS === "web" ? (

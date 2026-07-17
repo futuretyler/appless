@@ -1,10 +1,11 @@
 import { Renderer } from "@openuidev/react-lang";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { genosLibrary } from "../library";
 import { cleanLang, screenStore } from "../store";
 import { useCds } from "../theme";
+import { RenderPreviewContext } from "../ui/shared/preview";
 
 export interface RunningApp {
   id: string;
@@ -53,12 +54,18 @@ export function Switcher({
           No open apps
         </Text>
       )}
-      <ScrollView
+      {/* Windowed list: only near-visible cards mount their live preview -
+          a ScrollView would mount every session's Renderer at once. */}
+      <FlatList
         horizontal
+        data={apps}
+        keyExtractor={(app) => app.id}
         showsHorizontalScrollIndicator={false}
+        initialNumToRender={3}
+        windowSize={3}
+        removeClippedSubviews
         contentContainerStyle={{ gap: 16, paddingHorizontal: 28, alignItems: "center" }}
-      >
-        {apps.map((app) => {
+        renderItem={({ item: app }) => {
           const screenId = topScreenId(app.id);
           const screen = screenId ? screenStore.get(screenId) : undefined;
           return (
@@ -127,11 +134,15 @@ export function Switcher({
                       ],
                     }}
                   >
-                    <Renderer
-                      response={cleanLang(screen.content)}
-                      library={genosLibrary}
-                      isStreaming={false}
-                    />
+                    <RenderPreviewContext.Provider value={true}>
+                      <Renderer
+                        response={cleanLang(screen.content)}
+                        library={genosLibrary}
+                        // Honest flag: a mid-generation screen is a partial
+                        // program - the parser must treat it as streaming.
+                        isStreaming={screen.status !== "done"}
+                      />
+                    </RenderPreviewContext.Provider>
                   </View>
                 ) : (
                   <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -141,8 +152,8 @@ export function Switcher({
               </Pressable>
             </View>
           );
-        })}
-      </ScrollView>
+        }}
+      />
     </Pressable>
   );
 }
