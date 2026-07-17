@@ -33,6 +33,7 @@ import {
   openApp,
   openDeepLink,
   resolveAction,
+  retryScreen,
   screenStore,
   setActiveScreen,
 } from "../src/genos/store";
@@ -174,6 +175,23 @@ describe("closeApp", () => {
     const again = openDeepLink("timer", "start a 5 minute timer");
     expect(again).not.toBe(first);
     expect(screenStore.get(again)?.status).toBe("pending");
+  });
+
+  it("records provider truncation on the settled screen", () => {
+    const id = openApp(makeApp("recipes"));
+    const { handlers } = launches[launches.length - 1];
+    handlers.onDelta("root = Card([])");
+    handlers.onDone({ truncated: true, dropped: false });
+
+    const screen = screenStore.get(id);
+    expect(screen?.status).toBe("done");
+    expect(screen?.truncated).toBe(true);
+
+    // Regenerating clears the flag until the provider reports it again.
+    const relaunches = launches.length;
+    retryScreen(id);
+    expect(launches.length).toBe(relaunches + 1);
+    expect(screenStore.get(id)?.truncated).toBeUndefined();
   });
 
   it("leaves other apps' sessions untouched", () => {

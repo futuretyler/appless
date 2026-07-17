@@ -753,6 +753,38 @@ export default function GenOS() {
         </Pressable>
       )}
 
+      {/* The provider cut this screen short (finish_reason "length") - it
+          renders as complete but is missing content. Offer a regenerate. */}
+      {activeApp && top?.status === "done" && top.truncated && (
+        <Pressable
+          onPress={() => topId && retryScreen(topId)}
+          accessibilityRole="button"
+          accessibilityLabel="Screen was cut short - regenerate"
+          style={{
+            position: "absolute",
+            bottom: insets.bottom + 34,
+            alignSelf: "center",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 7,
+            paddingVertical: 5,
+            paddingHorizontal: 14,
+            borderRadius: 14,
+            backgroundColor: "rgba(255,159,10,0.94)",
+            zIndex: 35,
+            shadowColor: "#ff9f0a",
+            shadowOpacity: 0.4,
+            shadowRadius: 9,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: 6,
+          }}
+        >
+          <Text style={{ color: "#fff", fontSize: 11.5, fontWeight: "600", letterSpacing: 0.4 }}>
+            cut short - tap to regenerate
+          </Text>
+        </Pressable>
+      )}
+
       {activeApp && generating && (
         <View
           style={{
