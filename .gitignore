@@ -43,3 +43,6 @@ yarn-error.*
 # local env (contains API keys)
 .env
 .env.local
+
+# Test coverage output
+coverage/
