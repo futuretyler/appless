@@ -23,7 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cerebrasKey } from "../config";
 import type { AppDef } from "./apps";
-import { APPS, DEFAULT_TILE, summonApp } from "./apps";
+import { APPS, DEFAULT_TILE, summonApp, summonAppForCommand } from "./apps";
 import { genosLibrary } from "./library";
 import { HomeScreen } from "./shell/HomeScreen";
 import { KeyGate } from "./shell/KeyGate";
@@ -540,10 +540,7 @@ export default function GenOS() {
         pushScreen(activeApp, resolveAction(topId, text));
         return;
       }
-      launch({
-        ...summonApp(text.length > 24 ? `${text.slice(0, 24)}…` : text),
-        request: `Open the perfect app screen for this request: "${text}". Invent a polished, realistic screen that fulfils it.`,
-      });
+      launch(summonAppForCommand(text));
     },
     [activeApp, topId, launch, goBack, goHome, pushScreen, closeSession],
   );

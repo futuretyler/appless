@@ -122,6 +122,20 @@ export function summonApp(name: string): AppDef {
 }
 
 /**
+ * Summoned app for a free-form typed/spoken command. Identity comes from the
+ * FULL text - truncating first would collapse long requests sharing a prefix
+ * into one app and silently resume the old session. Only the display name
+ * truncates for the shell chrome.
+ */
+export function summonAppForCommand(text: string): AppDef {
+  return {
+    ...summonApp(text),
+    name: text.length > 24 ? `${text.slice(0, 24)}…` : text,
+    request: `Open the perfect app screen for this request: "${text}". Invent a polished, realistic screen that fulfils it.`,
+  };
+}
+
+/**
  * Rotating suggestion chips on the appless home. Each is phrased as a spoken
  * command and routed through the same pipeline as voice - chips ARE voice.
  */
