@@ -31,6 +31,7 @@ import { Switcher, type RunningApp } from "./shell/Switcher";
 import { extractFormValues } from "./formValues";
 import {
   cleanLang,
+  closeApp,
   openApp,
   openDeepLink,
   resolveAction,
@@ -360,6 +361,9 @@ export default function GenOS() {
 
   const closeSession = useCallback(
     (appId: string) => {
+      // Abort the app's in-flight generations and evict its store state -
+      // the shell state below only removes the visible session.
+      closeApp(appId);
       setSessions((s) => {
         const next = { ...s };
         delete next[appId];

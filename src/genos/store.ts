@@ -101,6 +101,15 @@ class ScreenStore {
     this.scheduleFlush();
   }
 
+  /** Evict screens (used when an app session closes). */
+  remove(ids: Iterable<string>) {
+    let changed = false;
+    for (const id of ids) {
+      if (this.screens.delete(id)) changed = true;
+    }
+    if (changed) this.bump();
+  }
+
   /** Notify subscribers at most once per STREAM_FLUSH_MS during streaming. */
   private scheduleFlush() {
     if (this.flushTimer) return;
@@ -376,6 +385,36 @@ export function resolveAction(
   });
   if (!hasFormValues) actionIndex.set(key, id);
   return id;
+}
+
+/**
+ * End an app's session: abort every in-flight generation for its screens
+ * (including speculative prefetch children), then evict the screens and all
+ * index entries pointing at them. Explicit close means the user wants the
+ * session GONE - reopening from the home grid regenerates fresh (the
+ * appHomeIndex fast-path is only for minimized/backgrounded apps).
+ */
+export function closeApp(appId: string) {
+  const removed = new Set<string>();
+  for (const s of screenStore.all()) {
+    if (s.appId === appId) removed.add(s.id);
+  }
+  for (const id of removed) {
+    const controller = inflight.get(id);
+    if (controller) {
+      controller.abort();
+      inflight.delete(id);
+    }
+  }
+  for (const [key, id] of actionIndex) {
+    if (removed.has(id)) actionIndex.delete(key);
+  }
+  for (const [key, id] of deepLinkIndex) {
+    if (removed.has(id)) deepLinkIndex.delete(key);
+  }
+  appHomeIndex.delete(appId);
+  if (activeScreenId && removed.has(activeScreenId)) activeScreenId = null;
+  screenStore.remove(removed);
 }
 
 /** Re-generate a failed or stuck screen in place. */
