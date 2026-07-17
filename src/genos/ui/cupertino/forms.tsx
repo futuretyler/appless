@@ -8,7 +8,12 @@ import type { ActionPlan } from "@openuidev/react-lang";
 import RNSlider from "@react-native-community/slider";
 import React, { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { readSelectItems, textInputBehaviorProps, useFieldState } from "../shared/forms";
+import {
+  inputComponentType,
+  readSelectItems,
+  textInputBehaviorProps,
+  useFieldState,
+} from "../shared/forms";
 import type {
   ButtonProps,
   ButtonsProps,
@@ -41,7 +46,7 @@ function useInputStyle() {
 // Text inputs
 export const Input: Renderer<InputProps> = ({ props }) => {
   const t = useCds();
-  const field = useFieldState(props.name, "Input", props.value);
+  const field = useFieldState(props.name, inputComponentType(props.type), props.value);
   const style = useInputStyle();
   return (
     <TextInput

@@ -28,6 +28,7 @@ import { genosLibrary } from "./library";
 import { HomeScreen } from "./shell/HomeScreen";
 import { KeyGate } from "./shell/KeyGate";
 import { Switcher, type RunningApp } from "./shell/Switcher";
+import { extractFormValues } from "./formValues";
 import {
   cleanLang,
   openApp,
@@ -44,6 +45,8 @@ import { AppsIcon, LucideIcon } from "./ui/icons";
 interface GenActionEvent {
   params?: Record<string, unknown>;
   humanFriendlyMessage?: string;
+  /** Present only when the action came from a named form's submit button. */
+  formName?: string;
   formState?: Record<string, unknown>;
 }
 
@@ -459,7 +462,13 @@ export default function GenOS() {
         goBack();
         return;
       }
-      pushScreen(activeApp, resolveAction(topId, message, ev.formState));
+      // Only a named form's submit carries values - react-lang snapshots the
+      // whole screen state into every other action event, which must never
+      // reach the model (it can include password fields).
+      pushScreen(
+        activeApp,
+        resolveAction(topId, message, extractFormValues(ev.formName, ev.formState)),
+      );
     },
     [topId, activeApp, generating, deepLink, goBack, goHome, showToast, pushScreen],
   );

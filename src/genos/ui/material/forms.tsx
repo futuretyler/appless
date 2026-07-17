@@ -4,7 +4,12 @@ import type { ActionPlan } from "@openuidev/react-lang";
 import RNSlider from "@react-native-community/slider";
 import React, { useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
-import { readSelectItems, textInputBehaviorProps, useFieldState } from "../shared/forms";
+import {
+  inputComponentType,
+  readSelectItems,
+  textInputBehaviorProps,
+  useFieldState,
+} from "../shared/forms";
 import type {
   ButtonProps,
   ButtonsProps,
@@ -36,7 +41,7 @@ function useOutlinedStyle(focused: boolean) {
 
 export const Input: Renderer<InputProps> = ({ props }) => {
   const t = useMd();
-  const field = useFieldState(props.name, "Input", props.value);
+  const field = useFieldState(props.name, inputComponentType(props.type), props.value);
   const [focused, setFocused] = useState(false);
   const style = useOutlinedStyle(focused);
   return (

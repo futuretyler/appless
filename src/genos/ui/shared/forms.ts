@@ -9,6 +9,16 @@ import {
   useSetDefaultValue,
   useSetFieldValue,
 } from "@openuidev/react-lang";
+import { PASSWORD_COMPONENT_TYPE } from "../../formValues";
+
+/**
+ * componentType for an Input's form-state entries. Password inputs get a
+ * distinct marker so extractFormValues can strip their values before any
+ * request leaves the device.
+ */
+export function inputComponentType(type?: string): string {
+  return type === "password" ? PASSWORD_COMPONENT_TYPE : "Input";
+}
 
 /**
  * Field state for one named input. `seedValue` is the model-supplied initial
