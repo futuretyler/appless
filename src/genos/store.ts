@@ -444,7 +444,25 @@ export function retryScreen(id: string) {
  */
 export function setActiveScreen(id: string | null) {
   activeScreenId = id;
+  cancelStalePrefetches(id);
   if (id && screenStore.get(id)?.status === "done") maybePrefetch(id);
+}
+
+/**
+ * Abort speculative generations whose parent is no longer the visible
+ * screen - prefetch spend should follow the user, not pile up behind them.
+ * Cancelled entries error silently and regenerate in place on tap, the same
+ * recovery path tool-refused prefetches already use. A prefetched screen the
+ * user tapped into is safe: resolveAction flips it non-speculative first.
+ */
+function cancelStalePrefetches(activeId: string | null) {
+  for (const [id, controller] of inflight) {
+    const s = screenStore.get(id);
+    if (!s?.speculative || s.parentId === activeId) continue;
+    controller.abort();
+    inflight.delete(id);
+    screenStore.patch(id, { status: "error", error: "prefetch cancelled", searching: false });
+  }
 }
 
 function maybePrefetch(id: string) {

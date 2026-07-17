@@ -117,6 +117,36 @@ describe("closeApp", () => {
     expect(screenStore.get(id)).toBeUndefined();
   });
 
+  it("navigating away cancels sibling prefetches but never the screen the user tapped", () => {
+    const before = launches.length;
+    const { id: parent } = openAndSettle("browser");
+    const [childA, childB] = launches.slice(before + 1);
+    expect(childA.handlers.signal?.aborted).toBe(false);
+    expect(childB.handlers.signal?.aborted).toBe(false);
+
+    // User taps "Go to A": the shell resolves the action, then reports the
+    // child as the new visible screen.
+    const tappedId = resolveAction(parent, "Go to A");
+    setActiveScreen(tappedId);
+
+    // The tapped screen's stream keeps running; its sibling is cancelled
+    // into a silently-errored cache entry.
+    expect(childA.handlers.signal?.aborted).toBe(false);
+    const siblingId = screenStore.all().find(
+      (s) => s.parentId === parent && s.id !== tappedId,
+    )!.id;
+    expect(childB.handlers.signal?.aborted).toBe(true);
+    expect(screenStore.get(siblingId)?.status).toBe("error");
+
+    // Tapping the cancelled action later regenerates it in place, fresh.
+    const launchesBefore = launches.length;
+    const again = resolveAction(parent, "Go to B");
+    expect(again).toBe(siblingId);
+    expect(launches.length).toBe(launchesBefore + 1);
+    expect(screenStore.get(siblingId)?.status).toBe("pending");
+    expect(screenStore.get(siblingId)?.speculative).toBe(false);
+  });
+
   it("leaves other apps' sessions untouched", () => {
     const a = openApp(makeApp("alpha"));
     const aHandlers = launches[launches.length - 1].handlers;
