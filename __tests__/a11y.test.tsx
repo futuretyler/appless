@@ -9,10 +9,10 @@ import { Renderer } from "@openuidev/react-lang";
 import React from "react";
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 
-jest.mock("react-native-webview", () => ({ WebView: () => null }));
-
 // eslint-disable-next-line import/first
 import { genosLibrary } from "../src/genos/library";
+// eslint-disable-next-line import/first
+import { textOf } from "../test-utils";
 
 const PROGRAM = `root = Card([header, gallery, hero, chips, tabs, rows, plain])
 header = CardHeader("Gallery")
@@ -40,19 +40,6 @@ afterAll(() => act(() => tree.unmount()));
 // Pressable and the host View it renders, double-counting every control.
 const byRole = (role: string): ReactTestInstance[] =>
   tree.root.findAll((n) => typeof n.type === "string" && n.props?.accessibilityRole === role);
-
-const textOf = (node: ReactTestInstance): string => {
-  let out = "";
-  const walk = (n: ReactTestInstance | string) => {
-    if (typeof n === "string") {
-      out += n;
-      return;
-    }
-    for (const child of n.children) walk(child);
-  };
-  walk(node);
-  return out;
-};
 
 describe("accessibility semantics (Cupertino)", () => {
   it("carries alt text into image accessibility labels", () => {

@@ -5,13 +5,6 @@
  * with full handler capture so tests drive stream completion by hand.
  */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
-
 // The real handler contract - a locally redeclared mock shape would drift.
 import type { StreamHandlers } from "../src/genos/stream";
 

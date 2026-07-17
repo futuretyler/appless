@@ -4,12 +4,6 @@
  * provider's reason - wiping it trapped users in a re-enter loop.
  */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-
 const mockFetch = jest.fn();
 jest.mock("expo/fetch", () => ({
   fetch: (...args: unknown[]) => mockFetch(...args),

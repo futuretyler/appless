@@ -7,8 +7,6 @@ import { Renderer } from "@openuidev/react-lang";
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 
-jest.mock("react-native-webview", () => ({ WebView: () => null }));
-
 // eslint-disable-next-line import/first
 import { genosLibrary } from "../src/genos/library";
 

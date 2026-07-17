@@ -4,12 +4,6 @@
  * a caller abort (navigation/close) stays silent.
  */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-
 // A fetch whose body hangs: read() only settles when the signal aborts -
 // exactly how a dead connection behaves under expo/fetch.
 jest.mock("expo/fetch", () => ({

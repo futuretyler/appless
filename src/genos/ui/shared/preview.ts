@@ -4,8 +4,6 @@
  * invisible at 0.5 scale, so component implementations swap in lightweight
  * placeholders when this is set.
  */
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 
 export const RenderPreviewContext = createContext(false);
-
-export const useIsPreview = () => useContext(RenderPreviewContext);

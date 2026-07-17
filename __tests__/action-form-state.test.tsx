@@ -6,14 +6,14 @@
  */
 import { Renderer } from "@openuidev/react-lang";
 import React from "react";
-import { act, create, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
-
-jest.mock("react-native-webview", () => ({ WebView: () => null }));
+import { act, create, type ReactTestRenderer } from "react-test-renderer";
 
 // eslint-disable-next-line import/first
 import { genosLibrary } from "../src/genos/library";
 // eslint-disable-next-line import/first
 import { extractFormValues, PASSWORD_COMPONENT_TYPE } from "../src/genos/formValues";
+// eslint-disable-next-line import/first
+import { textOf } from "../test-utils";
 
 describe("extractFormValues", () => {
   const entry = (value: unknown, componentType = "Input") => ({ value, componentType });
@@ -61,20 +61,6 @@ pass = Input("secret", "Password", "password")
 btns = Buttons([submit])
 submit = Button("Sign In", Action([@ToAssistant("Sign in to the account")]), "primary")
 recover = ListItem("Forgot password", null, "key", null, Action([@ToAssistant("Open the account recovery screen")]))`;
-
-/** All text rendered inside a node's subtree. */
-function textOf(node: ReactTestInstance): string {
-  let out = "";
-  const walk = (n: ReactTestInstance | string) => {
-    if (typeof n === "string") {
-      out += n;
-      return;
-    }
-    for (const child of n.children) walk(child);
-  };
-  walk(node);
-  return out;
-}
 
 /** Press the innermost pressable whose subtree shows `label`. */
 function press(tree: ReactTestRenderer, label: string) {

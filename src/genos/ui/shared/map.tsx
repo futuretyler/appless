@@ -14,7 +14,7 @@ import React from "react";
 import { Platform, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import type { MapViewProps, Renderer } from "../contract";
-import { useIsPreview } from "./preview";
+import { RenderPreviewContext } from "./preview";
 
 export function createMapRenderer(borderRadius: number): Renderer<MapViewProps> {
   return function MapView({ props }) {
@@ -24,7 +24,7 @@ export function createMapRenderer(borderRadius: number): Renderer<MapViewProps> 
 
     // Switcher miniatures: a real embed per card is a WebView each - render
     // a flat placeholder instead.
-    if (useIsPreview()) {
+    if (React.useContext(RenderPreviewContext)) {
       return (
         <View
           style={{

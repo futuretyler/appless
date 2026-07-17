@@ -5,14 +5,6 @@
  * The stream is mocked with handler capture; everything else is real.
  */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
-jest.mock("react-native-webview", () => ({ WebView: () => null }));
-
 // The real handler contract - a locally redeclared mock shape would drift.
 import type { StreamHandlers } from "../src/genos/stream";
 
@@ -33,19 +25,8 @@ import { cerebrasKey } from "../src/config";
 import GenOS from "../src/genos/GenOS";
 // eslint-disable-next-line import/first
 import { screenStore } from "../src/genos/store";
-
-const textOf = (node: ReactTestInstance | ReactTestRenderer["root"]): string => {
-  let out = "";
-  const walk = (n: ReactTestInstance | string) => {
-    if (typeof n === "string") {
-      out += ` ${n}`;
-      return;
-    }
-    for (const child of n.children) walk(child);
-  };
-  walk(node as ReactTestInstance);
-  return out;
-};
+// eslint-disable-next-line import/first
+import { textOf } from "../test-utils";
 
 function askBar(tree: ReactTestRenderer): ReactTestInstance {
   const input = tree.root.findAll(

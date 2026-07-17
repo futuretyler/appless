@@ -1,11 +1,5 @@
 /** KeyGate: the API key field must be concealed with an explicit reveal. */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 // eslint-disable-next-line import/first

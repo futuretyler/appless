@@ -3,13 +3,6 @@
  * streamScreen is mocked - these tests never touch the network.
  */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
-
 // Capture stream launches instead of hitting Cerebras.
 const streamCalls: Array<{ messages: unknown }> = [];
 jest.mock("../src/genos/stream", () => ({

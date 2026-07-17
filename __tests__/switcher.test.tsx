@@ -4,12 +4,6 @@
  * programs, not passed off as complete.
  */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
 jest.mock("../src/genos/stream", () => ({
   NEEDS_LIVE_DATA: "needs live data",
   streamScreen: jest.fn(),

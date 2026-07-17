@@ -1,13 +1,5 @@
 /** Unit tests for the in-app tools: semantic images and the @Search protocol. */
 
-jest.mock("expo-secure-store", () => ({
-  getItemAsync: async () => null,
-  setItemAsync: async () => {},
-  deleteItemAsync: async () => {},
-}));
-// expo/fetch pulls the winter runtime, which jest-expo's env can't load.
-jest.mock("expo/fetch", () => ({ fetch: jest.fn() }));
-
 import { isTrustedImageUrl, loremflickrUrl, parseImgUrl } from "../src/genos/tools/images";
 import { executeTool, formatWebResults } from "../src/genos/tools/search";
 
