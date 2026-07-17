@@ -8,6 +8,10 @@
  */
 import { fetch as expoFetch } from "expo/fetch";
 import { EXA_API_KEY } from "../../config";
+import { createWatchdog } from "../watchdog";
+
+/** A search that hasn't answered in this long won't - fail the tool round. */
+const SEARCH_TIMEOUT_MS = 20_000;
 
 export interface SearchResult {
   title: string;
@@ -68,31 +72,39 @@ export async function executeTool(
 const domain = (url: string) => url.match(/^https?:\/\/(?:www\.)?([^/]+)/)?.[1] ?? url;
 
 export async function webSearch(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
-  const res = await expoFetch("https://api.exa.ai/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": EXA_API_KEY ?? "" },
-    body: JSON.stringify({
-      query,
-      numResults: 5,
-      contents: { text: { maxCharacters: 400 } },
-    }),
-    signal,
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new Error(detail.slice(0, 200) || `Exa HTTP ${res.status}`);
+  const watchdog = createWatchdog({ signal, totalMs: SEARCH_TIMEOUT_MS });
+  try {
+    const res = await expoFetch("https://api.exa.ai/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": EXA_API_KEY ?? "" },
+      body: JSON.stringify({
+        query,
+        numResults: 5,
+        contents: { text: { maxCharacters: 400 } },
+      }),
+      signal: watchdog.signal,
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(detail.slice(0, 200) || `Exa HTTP ${res.status}`);
+    }
+    const json = (await res.json()) as {
+      results?: Array<{ title?: string; url?: string; text?: string; publishedDate?: string }>;
+    };
+    return (json.results ?? [])
+      .filter((r) => r.url)
+      .map((r) => ({
+        title: r.title ?? domain(r.url!),
+        url: r.url!,
+        snippet: (r.text ?? "").replace(/\s+/g, " ").trim(),
+        published: r.publishedDate,
+      }));
+  } catch (err) {
+    if (watchdog.timedOut) throw new Error("web search timed out");
+    throw err;
+  } finally {
+    watchdog.dispose();
   }
-  const json = (await res.json()) as {
-    results?: Array<{ title?: string; url?: string; text?: string; publishedDate?: string }>;
-  };
-  return (json.results ?? [])
-    .filter((r) => r.url)
-    .map((r) => ({
-      title: r.title ?? domain(r.url!),
-      url: r.url!,
-      snippet: (r.text ?? "").replace(/\s+/g, " ").trim(),
-      published: r.publishedDate,
-    }));
 }
 
 export function formatWebResults(query: string, results: SearchResult[]): string {
