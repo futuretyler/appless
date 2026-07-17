@@ -52,5 +52,11 @@
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|lucide-react-native|@openuidev/.*))"
     ]
+  },
+  "overrides": {
+    "postcss": "^8.5.10",
+    "xcode": {
+      "uuid": "^11.1.1"
+    }
   }
 }
