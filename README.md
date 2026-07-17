@@ -184,6 +184,18 @@ Pick a screen, give the model a tool that returns real data and somewhere to sen
 the action, and the demo turns into a working app. Open a PR - we would love to
 see what you build.
 
+Before you ship anything, run the local gate:
+
+```bash
+npm run check   # typecheck + full test suite with coverage floors
+```
+
+The suite covers the pieces new features lean on - session lifecycle and
+stream cancellation, prefetch, the tool-call loop (caps, timeouts, auth
+failures), the form-state trust boundary, URL/image allowlists, renderer
+a11y semantics, and an end-to-end shell smoke test - so a red run means a
+foundation you were standing on moved.
+
 ## Learn more
 
 AppLess is one of many things you can build on OpenUI. To use the same
