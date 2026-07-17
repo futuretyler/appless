@@ -8,6 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import {
+  Alert,
   Animated,
   BackHandler,
   Easing,
@@ -29,6 +30,7 @@ import { HomeScreen } from "./shell/HomeScreen";
 import { KeyGate } from "./shell/KeyGate";
 import { Switcher, type RunningApp } from "./shell/Switcher";
 import { extractFormValues } from "./formValues";
+import { externalHost, isSafeExternalUrl, parseGenosUrl } from "./urls";
 import {
   cleanLang,
   closeApp,
@@ -62,28 +64,6 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 type NavDir = "launch" | "push" | "pop";
 
 const EASE = Easing.bezier(0.22, 1, 0.32, 1);
-
-/**
- * genos:// deep links parsed by hand - Hermes' URL support for custom
- * schemes varies, and the shape is tiny: genos://cmd?key=value&…
- */
-function parseGenosUrl(url: string): { cmd: string; params: Record<string, string> } | null {
-  const m = url.match(/^genos:\/\/([a-z]+)\/?(?:\?(.*))?$/i);
-  if (!m) return null;
-  const params: Record<string, string> = {};
-  for (const pair of (m[2] ?? "").split("&")) {
-    if (!pair) continue;
-    const eq = pair.indexOf("=");
-    const k = eq === -1 ? pair : pair.slice(0, eq);
-    const v = eq === -1 ? "" : pair.slice(eq + 1);
-    try {
-      params[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, " "));
-    } catch {
-      params[k] = v;
-    }
-  }
-  return { cmd: m[1].toLowerCase(), params };
-}
 
 /** Direction-aware screen transition: launch zooms up, push slides from the
  *  right, pop settles back from the left. */
@@ -438,7 +418,22 @@ export default function GenOS() {
         return;
       }
       if (typeof url === "string" && url) {
-        Linking.openURL(url).catch(() => {});
+        // Model-produced links are untrusted (web_search snippets can steer
+        // them): only plain web URLs leave the app, and only after the user
+        // confirms the destination.
+        if (!isSafeExternalUrl(url)) {
+          showToast("Blocked a non-web link");
+          return;
+        }
+        const open = () => Linking.openURL(url).catch(() => {});
+        if (Platform.OS === "web") {
+          if (globalThis.confirm?.(`Open ${externalHost(url)}?`)) open();
+        } else {
+          Alert.alert("Leave AppLess?", `Open ${externalHost(url)} in your browser?`, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open", onPress: open },
+          ]);
+        }
         return;
       }
       const message = ev.humanFriendlyMessage?.trim();
